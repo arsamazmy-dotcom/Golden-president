@@ -1,0 +1,2 @@
+# Myket Billing Client
+-keep class ir.myket.billingclient.** { *; }
