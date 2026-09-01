@@ -1,1 +1,33 @@
+name: Build Game
 
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: دریافت فایل‌ها
+        uses: actions/checkout@v4
+
+      - name: بررسی فایل بازی
+        run: |
+          echo "Game files:"
+          find . -maxdepth 2 -type f
+
+      - name: ساخت ZIP بازی
+        run: |
+          mkdir -p output
+          zip -r output/golden-president.zip . \
+            -x ".git/*" \
+            -x ".github/*"
+
+      - name: ذخیره فایل بازی
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-president
+          path: output/golden-president.zip
