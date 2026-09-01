@@ -3106,6 +3106,7 @@ function endTurn(){
   // Game time is intentionally slower: four player turns represent one in-game day.
   // The turn counter still advances every action, while the calendar/day-night cycle moves every fourth turn.
   if(g.turn % 4 === 0){ advanceDate(g); generateDailyRequest(g); }
+  maybeShowTurnAd();
   const hostileAttack = maybeTriggerHostileAttack(g);
   // Soft decay relations toward 0
   Object.keys(g.relations).forEach(id=>{
@@ -3351,7 +3352,7 @@ function showRewardedAd(){
   state.toast='نمایش تبلیغ جایزه‌ای به اتصال SDK مایکت نیاز دارد';render();setTimeout(()=>{state.toast=null;render()},2200);
 }
 window.onMyketRewardedCompleted=function(){
-  if(!state.game)return; state.storeBusy=false; state.game.store=state.game.store||{owned:{no_ads:false,premium:false},purchases:[],rewardedAds:0}; state.game.store.rewardedAds=(state.game.store.rewardedAds||0)+1; state.game.res.money=(state.game.res.money||0)+5000; addLog('🎁 تبلیغ جایزه‌ای تماشا شد و ۵٬۰۰۰ بودجه دریافت کردید.'); saveGame(); state.toast='🎁 ۵٬۰۰۰ بودجه دریافت شد';render();setTimeout(()=>{state.toast=null;render()},1800);
+  if(!state.game)return; state.storeBusy=false; state.game.store=state.game.store||{owned:{no_ads:false,premium:false},purchases:[],rewardedAds:0}; state.game.store.rewardedAds=(state.game.store.rewardedAds||0)+1; state.game.res.money=(state.game.res.money||0)+1000; addLog('🎁 تبلیغ جایزه‌ای تماشا شد و ۱٬۰۰۰ بودجه دریافت کردید.'); saveGame(); state.toast='🎁 ۱٬۰۰۰ بودجه دریافت شد';render();setTimeout(()=>{state.toast=null;render()},1800);
 };
 window.onMyketRewardedFailed=function(){state.storeBusy=false;state.toast='تبلیغ جایزه‌ای در دسترس نبود';render();setTimeout(()=>{state.toast=null;render()},1800);};
 function showInterstitialAd(){
@@ -3368,8 +3369,15 @@ function maybeShowStartupAd(){
     if(sessionStorage.getItem('gp_startup_ad_shown')==='1') return;
     sessionStorage.setItem('gp_startup_ad_shown','1');
   }catch(e){}
-  // Occasional interstitial: roughly 35% of fresh game launches, never repeatedly on re-render.
-  if(Math.random() < 0.35){ setTimeout(()=>showInterstitialAd(), 1800); }
+  // Occasional launch ad; never repeatedly on re-render.
+  if(Math.random() < 0.30){ setTimeout(()=>showInterstitialAd(), 1800); }
+}
+function maybeShowTurnAd(){
+  if(!state.game || isAdsRemoved()) return;
+  // Show an interstitial only at a natural pause, after every 5 turns with a 60% chance.
+  if(state.game.turn > 0 && state.game.turn % 5 === 0 && Math.random() < 0.60){
+    setTimeout(()=>showInterstitialAd(), 700);
+  }
 }
 
 function renderStore(){
@@ -3381,7 +3389,7 @@ function renderStore(){
   return `<div class="store-hero"><h3>🛒 فروشگاه بازی</h3><p>خریدها برای همین بازی ثبت می‌شوند. در نسخه WebView، پرداخت واقعی از طریق Bridge مایکت انجام می‌شود.</p></div>
   <div class="store-section">💎 بسته‌های ویژه</div><div class="store-grid">${products}</div>
   <div class="store-section">🎁 پاداش روزانه</div>
-  <div class="ad-card"><div class="ad-title">🎬 تبلیغ جایزه‌ای</div><div class="ad-sub">با تماشای تبلیغ، ۵٬۰۰۰ بودجه دریافت کنید.</div><button ${state.storeBusy||isAdsRemoved()?'disabled':''} onclick="showRewardedAd()">${isAdsRemoved()?'تبلیغات حذف شده':'تماشای تبلیغ +۵٬۰۰۰'}</button></div>
+  <div class="ad-card"><div class="ad-title">🎬 تبلیغ جایزه‌ای</div><div class="ad-sub">با تماشای تبلیغ، ۱٬۰۰۰ بودجه دریافت کنید.</div><button ${state.storeBusy||isAdsRemoved()?'disabled':''} onclick="showRewardedAd()">${isAdsRemoved()?'تبلیغات حذف شده':'تماشای تبلیغ +۱٬۰۰۰'}</button></div>
   <button class="btn btn-ghost" style="width:100%;margin-top:5px;" onclick="requestRestorePurchases()">♻️ بازیابی خریدهای مایکت</button>`;
 }
 
@@ -3575,7 +3583,7 @@ function renderHomeDashboard(){
     ${!isAdsRemoved()?`<div class="home-card ad-home-card">
       <div class="home-card-title"><span>🎬 تبلیغ جایزه‌ای</span><small>پاداش اختیاری</small></div>
       <div style="font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:8px;">با تماشای یک تبلیغ، <b style="color:var(--gold2)">۵٬۰۰۰ بودجه</b> دریافت کنید.</div>
-      <button class="btn btn-gold" style="width:100%;padding:9px 12px;font-size:11px;" onclick="showRewardedAd()">▶️ تماشای تبلیغ +۵٬۰۰۰</button>
+      <button class="btn btn-gold" style="width:100%;padding:9px 12px;font-size:11px;" onclick="showRewardedAd()">▶️ تماشای تبلیغ +۱٬۰۰۰</button>
     </div>`:''}
     <div class="home-card">
       <div class="home-card-title"><span>📊 وضعیت کشور</span><small>شاخص‌های کلیدی</small></div>
