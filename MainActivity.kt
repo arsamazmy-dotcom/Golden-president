@@ -12,7 +12,7 @@ import com.yandex.mobile.ads.common.AdError
 import com.yandex.mobile.ads.common.AdRequest
 import com.yandex.mobile.ads.common.AdRequestError
 import com.yandex.mobile.ads.common.ImpressionData
-import com.yandex.mobile.ads.common.MobileAds
+import com.yandex.mobile.ads.common.YandexAds
 import com.yandex.mobile.ads.interstitial.InterstitialAd
 import com.yandex.mobile.ads.interstitial.InterstitialAdEventListener
 import com.yandex.mobile.ads.interstitial.InterstitialAdLoader
@@ -132,20 +132,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupAds() {
-        MobileAds.initialize(this) {
+        YandexAds.initialize(this) {
             runOnUiThread {
                 if (!noAds) {
-                    interstitialLoader = InterstitialAdLoader(this).apply {
-                        setAdLoadListener(object : InterstitialAdLoadListener {
-                            override fun onAdLoaded(ad: InterstitialAd) {
-                                interstitialAd = ad
-                            }
-
-                            override fun onAdFailedToLoad(error: AdRequestError) {
-                                interstitialAd = null
-                            }
-                        })
-                    }
+                    interstitialLoader = InterstitialAdLoader(this)
                     rewardedLoader = RewardedAdLoader(this)
                     loadInterstitial()
                     loadRewarded()
@@ -156,7 +146,18 @@ class MainActivity : AppCompatActivity() {
 
     private fun loadInterstitial() {
         if (noAds) return
-        interstitialLoader?.loadAd(AdRequest.Builder(BuildConfig.INTERSTITIAL_AD_UNIT_ID).build())
+        interstitialLoader?.loadAd(
+            AdRequest.Builder(BuildConfig.INTERSTITIAL_AD_UNIT_ID).build(),
+            object : InterstitialAdLoadListener {
+                override fun onAdLoaded(ad: InterstitialAd) {
+                    interstitialAd = ad
+                }
+
+                override fun onAdFailedToLoad(error: AdRequestError) {
+                    interstitialAd = null
+                }
+            }
+        )
     }
 
     private fun loadRewarded() {
@@ -287,7 +288,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        interstitialLoader?.setAdLoadListener(null)
         interstitialAd?.setAdEventListener(null)
         rewardedAd?.setAdEventListener(null)
         interstitialLoader = null
